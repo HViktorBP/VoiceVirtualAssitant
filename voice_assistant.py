@@ -76,49 +76,6 @@ conversation = Conversation(
   callback_user_transcript=print_user_transcript,
 )
 
-
-def _shutdown_and_exit(*args, **kwargs):
-  try:
-    if 'conversation' in globals() and conversation is not None:
-      conversation.end_session()
-  except Exception:
-    pass
-  try:
-    sys.exit(0)
-  except SystemExit:
-    raise
-
-try:
-  signal.signal(signal.SIGINT, lambda s, f: _shutdown_and_exit())
-except Exception:
-  pass
-try:
-  signal.signal(signal.SIGTERM, lambda s, f: _shutdown_and_exit())
-except Exception:
-  pass
-if hasattr(signal, 'SIGBREAK'):
-  try:
-    signal.signal(signal.SIGBREAK, lambda s, f: _shutdown_and_exit())
-  except Exception:
-    pass
-
-atexit.register(_shutdown_and_exit)
-
-if os.name == 'nt':
-  try:
-    HandlerRoutine = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_uint)
-
-    def _console_ctrl_handler(ctrl_type):
-      if ctrl_type in (0, 1, 2, 5, 6):
-        _shutdown_and_exit()
-        return True
-      return False
-
-    ctypes.windll.kernel32.SetConsoleCtrlHandler(HandlerRoutine(_console_ctrl_handler), True)
-  except Exception:
-    pass
-
-
 conversation.start_session()
 
 def _enter_shutdown():
@@ -139,5 +96,4 @@ def _wait_for_enter_and_shutdown():
     pass
   _enter_shutdown()
 
-# Start a background thread that will exit when Enter is pressed
 threading.Thread(target=_wait_for_enter_and_shutdown, daemon=True).start()
